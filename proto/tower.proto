@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package mytowerproto;
+
+message Point {
+  float x = 1;
+  float y = 2;
+}
+
+message CreatePointRequest {
+    string id = 1;
+    Point point = 2;
+}
+
+message CreatePointResponse {
+    string id = 1;
+    Point point = 2;
+}
+
+message ListPointsRequest {}
+
+message ListPointsResponse {
+    int32 count = 1;
+    repeated Point points = 2;
+}
+
+service MyTowerService {
+    rpc CreatePoint(CreatePointRequest) returns (CreatePointResponse) {}
+    rpc ListPoints(ListPointsRequest) returns (ListPointsResponse) {}
+}
