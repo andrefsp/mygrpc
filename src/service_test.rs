@@ -18,7 +18,7 @@ async fn test_create_point() {
         let server = service::Service::create_server();
         let res = Server::builder()
             .add_service(server)
-            .serve_with_shutdown("[::1]:10000".parse().unwrap(), async move {
+            .serve_with_shutdown("0.0.0.0:10000".parse().unwrap(), async move {
                 rx.await.unwrap();
             })
             .await;
@@ -31,7 +31,7 @@ async fn test_create_point() {
         use proto::mytowerproto::my_tower_service_client::MyTowerServiceClient;
         use proto::mytowerproto::{CreatePointRequest, ListPointsRequest, Point};
 
-        let client = MyTowerServiceClient::connect("http://[::1]:10000").await;
+        let client = MyTowerServiceClient::connect("http://127.0.0.1:10000").await;
         assert!(client.is_ok());
 
         let mut client = client.unwrap();

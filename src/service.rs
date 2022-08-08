@@ -9,6 +9,10 @@ use proto::mytowerproto::{
     CreatePointRequest, CreatePointResponse, ListPointsRequest, ListPointsResponse, Point,
 };
 
+pub fn one() -> u8 {
+    1
+}
+
 #[derive(Default)]
 pub struct Service {
     points: Arc<Mutex<BTreeMap<String, Point>>>,
@@ -31,7 +35,7 @@ impl MyTowerService for Service {
 
         let point = match request.point {
             Some(point) => point,
-            _ => return Ok(Response::new(CreatePointResponse::default())),
+            _ => return Err(tonic::Status::invalid_argument("invalid request")),
         };
 
         let points = self.points.clone();
@@ -54,18 +58,12 @@ impl MyTowerService for Service {
         let points = self.points.clone();
         let points = points.lock().unwrap();
 
-        let count = points.len() as i32;
-
         let mut point_list = vec![];
         point_list.extend(points.values().map(|val| val.to_owned()));
 
         Ok(Response::new(ListPointsResponse {
-            count,
+            count: points.len() as i32,
             points: point_list,
         }))
     }
-}
-
-pub fn one() -> u8 {
-    1
 }
