@@ -11,6 +11,7 @@ tower-service = "0.3.2"
 http = "0.2.8"
 
 tonic = "0.7.2"
+tonic-web = "0.3.0"
 prost = "0.10"
 futures-core = "0.3"
 futures-util = "0.3"

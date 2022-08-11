@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use tonic::{Request, Response};
+use tonic::{Request, Response, Status};
 
 use proto::mytowerproto::my_tower_service_server::{MyTowerService, MyTowerServiceServer};
 use proto::mytowerproto::{
@@ -30,12 +30,12 @@ impl MyTowerService for Service {
     async fn create_point(
         &self,
         request: Request<CreatePointRequest>,
-    ) -> Result<Response<CreatePointResponse>, tonic::Status> {
+    ) -> Result<Response<CreatePointResponse>, Status> {
         let request = request.into_inner();
-
+        println!("create_point: {:?}", request);
         let point = match request.point {
             Some(point) => point,
-            _ => return Err(tonic::Status::invalid_argument("invalid request")),
+            _ => return Err(Status::invalid_argument("invalid request")),
         };
 
         let points = self.points.clone();
@@ -53,16 +53,20 @@ impl MyTowerService for Service {
 
     async fn list_points(
         &self,
-        _request: tonic::Request<ListPointsRequest>,
-    ) -> Result<tonic::Response<ListPointsResponse>, tonic::Status> {
+        request: tonic::Request<ListPointsRequest>,
+    ) -> Result<tonic::Response<ListPointsResponse>, Status> {
+        println!("list_points: {:?}", request);
+
         let points = self.points.clone();
         let points = points.lock().unwrap();
+
+        let point_count = points.len() as i32;
 
         let mut point_list = vec![];
         point_list.extend(points.values().map(|val| val.to_owned()));
 
         Ok(Response::new(ListPointsResponse {
-            count: points.len() as i32,
+            count: point_count,
             points: point_list,
         }))
     }
