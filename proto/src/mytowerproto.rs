@@ -131,6 +131,28 @@ pub mod my_tower_service_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        pub async fn push_points(
+            &mut self,
+            request: impl tonic::IntoStreamingRequest<Message = super::Point>,
+        ) -> Result<
+            tonic::Response<tonic::codec::Streaming<super::Point>>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/mytowerproto.MyTowerService/PushPoints",
+            );
+            self.inner.streaming(request.into_streaming_request(), path, codec).await
+        }
     }
 }
 /// Generated server implementations.
@@ -148,6 +170,16 @@ pub mod my_tower_service_server {
             &self,
             request: tonic::Request<super::ListPointsRequest>,
         ) -> Result<tonic::Response<super::ListPointsResponse>, tonic::Status>;
+        ///Server streaming response type for the PushPoints method.
+        type PushPointsStream: futures_core::Stream<
+                Item = Result<super::Point, tonic::Status>,
+            >
+            + Send
+            + 'static;
+        async fn push_points(
+            &self,
+            request: tonic::Request<tonic::Streaming<super::Point>>,
+        ) -> Result<tonic::Response<Self::PushPointsStream>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct MyTowerServiceServer<T: MyTowerService> {
@@ -270,6 +302,43 @@ pub mod my_tower_service_server {
                                 send_compression_encodings,
                             );
                         let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/mytowerproto.MyTowerService/PushPoints" => {
+                    #[allow(non_camel_case_types)]
+                    struct PushPointsSvc<T: MyTowerService>(pub Arc<T>);
+                    impl<T: MyTowerService> tonic::server::StreamingService<super::Point>
+                    for PushPointsSvc<T> {
+                        type Response = super::Point;
+                        type ResponseStream = T::PushPointsStream;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::ResponseStream>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<tonic::Streaming<super::Point>>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).push_points(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = PushPointsSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            );
+                        let res = grpc.streaming(method, req).await;
                         Ok(res)
                     };
                     Box::pin(fut)

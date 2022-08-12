@@ -27,4 +27,6 @@ message ListPointsResponse {
 service MyTowerService {
     rpc CreatePoint(CreatePointRequest) returns (CreatePointResponse) {}
     rpc ListPoints(ListPointsRequest) returns (ListPointsResponse) {}
+
+    rpc PushPoints(stream Point) returns(stream Point) {}
 }

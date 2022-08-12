@@ -2,7 +2,10 @@ use std::collections::BTreeMap;
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use tonic::{Request, Response, Status};
+use tokio_stream::wrappers::ReceiverStream;
+use tokio_stream::StreamExt;
+
+use tonic::{Request, Response, Status, Streaming};
 
 use proto::mytowerproto::my_tower_service_server::{MyTowerService, MyTowerServiceServer};
 use proto::mytowerproto::{
@@ -53,8 +56,8 @@ impl MyTowerService for Service {
 
     async fn list_points(
         &self,
-        request: tonic::Request<ListPointsRequest>,
-    ) -> Result<tonic::Response<ListPointsResponse>, Status> {
+        request: Request<ListPointsRequest>,
+    ) -> Result<Response<ListPointsResponse>, Status> {
         println!("list_points: {:?}", request);
 
         let points = self.points.clone();
@@ -69,5 +72,34 @@ impl MyTowerService for Service {
             count: point_count,
             points: point_list,
         }))
+    }
+
+    type PushPointsStream = ReceiverStream<Result<Point, Status>>;
+
+    async fn push_points(
+        &self,
+        request: Request<Streaming<Point>>,
+    ) -> Result<Response<Self::PushPointsStream>, Status> {
+        let (tx, rx) = tokio::sync::mpsc::channel(10);
+        let rx = tokio_stream::wrappers::ReceiverStream::new(rx);
+
+        tokio::spawn(async move {
+            let mut in_stream = request.into_inner();
+
+            while let Some(result) = in_stream.next().await {
+                match result {
+                    Ok(point) => tx.send(Ok(point)).await.expect("message sent"),
+                    Err(err) => {
+                        println!("err: {:?}", err);
+                        tx.send(Err(Status::internal("closing connection")))
+                            .await
+                            .unwrap();
+                        return;
+                    }
+                };
+            }
+        });
+
+        Ok(Response::new(rx))
     }
 }
