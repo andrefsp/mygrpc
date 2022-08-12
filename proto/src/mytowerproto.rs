@@ -23,6 +23,9 @@ pub struct CreatePointResponse {
 pub struct ListPointsRequest {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct StreamPointsRequest {
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListPointsResponse {
     #[prost(int32, tag="1")]
     pub count: i32,
@@ -153,6 +156,28 @@ pub mod my_tower_service_client {
             );
             self.inner.streaming(request.into_streaming_request(), path, codec).await
         }
+        pub async fn stream_points(
+            &mut self,
+            request: impl tonic::IntoRequest<super::StreamPointsRequest>,
+        ) -> Result<
+            tonic::Response<tonic::codec::Streaming<super::Point>>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/mytowerproto.MyTowerService/StreamPoints",
+            );
+            self.inner.server_streaming(request.into_request(), path, codec).await
+        }
     }
 }
 /// Generated server implementations.
@@ -180,6 +205,16 @@ pub mod my_tower_service_server {
             &self,
             request: tonic::Request<tonic::Streaming<super::Point>>,
         ) -> Result<tonic::Response<Self::PushPointsStream>, tonic::Status>;
+        ///Server streaming response type for the StreamPoints method.
+        type StreamPointsStream: futures_core::Stream<
+                Item = Result<super::Point, tonic::Status>,
+            >
+            + Send
+            + 'static;
+        async fn stream_points(
+            &self,
+            request: tonic::Request<super::StreamPointsRequest>,
+        ) -> Result<tonic::Response<Self::StreamPointsStream>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct MyTowerServiceServer<T: MyTowerService> {
@@ -339,6 +374,47 @@ pub mod my_tower_service_server {
                                 send_compression_encodings,
                             );
                         let res = grpc.streaming(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/mytowerproto.MyTowerService/StreamPoints" => {
+                    #[allow(non_camel_case_types)]
+                    struct StreamPointsSvc<T: MyTowerService>(pub Arc<T>);
+                    impl<
+                        T: MyTowerService,
+                    > tonic::server::ServerStreamingService<super::StreamPointsRequest>
+                    for StreamPointsSvc<T> {
+                        type Response = super::Point;
+                        type ResponseStream = T::StreamPointsStream;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::ResponseStream>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::StreamPointsRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move {
+                                (*inner).stream_points(request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = StreamPointsSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            );
+                        let res = grpc.server_streaming(method, req).await;
                         Ok(res)
                     };
                     Box::pin(fut)

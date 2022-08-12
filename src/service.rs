@@ -10,6 +10,7 @@ use tonic::{Request, Response, Status, Streaming};
 use proto::mytowerproto::my_tower_service_server::{MyTowerService, MyTowerServiceServer};
 use proto::mytowerproto::{
     CreatePointRequest, CreatePointResponse, ListPointsRequest, ListPointsResponse, Point,
+    StreamPointsRequest,
 };
 
 pub fn one() -> u8 {
@@ -74,8 +75,9 @@ impl MyTowerService for Service {
         }))
     }
 
+    // bidirectional streams are not supported by gRPC-web;
+    // this endpoint is therefore just one example.
     type PushPointsStream = ReceiverStream<Result<Point, Status>>;
-
     async fn push_points(
         &self,
         request: Request<Streaming<Point>>,
@@ -101,5 +103,15 @@ impl MyTowerService for Service {
         });
 
         Ok(Response::new(rx))
+    }
+
+    // Server downstream stream. Given a request the server responds
+    // with a unidirectional stream.
+    type StreamPointsStream = ReceiverStream<Result<Point, Status>>;
+    async fn stream_points(
+        &self,
+        _request: Request<StreamPointsRequest>,
+    ) -> Result<Response<Self::StreamPointsStream>, Status> {
+        Err(Status::unimplemented(""))
     }
 }

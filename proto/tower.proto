@@ -19,6 +19,8 @@ message CreatePointResponse {
 
 message ListPointsRequest {}
 
+message StreamPointsRequest {}
+
 message ListPointsResponse {
     int32 count = 1;
     repeated Point points = 2;
@@ -29,4 +31,6 @@ service MyTowerService {
     rpc ListPoints(ListPointsRequest) returns (ListPointsResponse) {}
 
     rpc PushPoints(stream Point) returns(stream Point) {}
+
+    rpc StreamPoints(StreamPointsRequest) returns(stream Point) {}
 }

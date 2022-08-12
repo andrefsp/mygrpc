@@ -192,5 +192,61 @@ proto.mytowerproto.MyTowerServicePromiseClient.prototype.listPoints =
 };
 
 
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
+ *   !proto.mytowerproto.StreamPointsRequest,
+ *   !proto.mytowerproto.Point>}
+ */
+const methodDescriptor_MyTowerService_StreamPoints = new grpc.web.MethodDescriptor(
+  '/mytowerproto.MyTowerService/StreamPoints',
+  grpc.web.MethodType.SERVER_STREAMING,
+  proto.mytowerproto.StreamPointsRequest,
+  proto.mytowerproto.Point,
+  /**
+   * @param {!proto.mytowerproto.StreamPointsRequest} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.mytowerproto.Point.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.mytowerproto.StreamPointsRequest} request The request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!grpc.web.ClientReadableStream<!proto.mytowerproto.Point>}
+ *     The XHR Node Readable Stream
+ */
+proto.mytowerproto.MyTowerServiceClient.prototype.streamPoints =
+    function(request, metadata) {
+  return this.client_.serverStreaming(this.hostname_ +
+      '/mytowerproto.MyTowerService/StreamPoints',
+      request,
+      metadata || {},
+      methodDescriptor_MyTowerService_StreamPoints);
+};
+
+
+/**
+ * @param {!proto.mytowerproto.StreamPointsRequest} request The request proto
+ * @param {?Object<string, string>=} metadata User defined
+ *     call metadata
+ * @return {!grpc.web.ClientReadableStream<!proto.mytowerproto.Point>}
+ *     The XHR Node Readable Stream
+ */
+proto.mytowerproto.MyTowerServicePromiseClient.prototype.streamPoints =
+    function(request, metadata) {
+  return this.client_.serverStreaming(this.hostname_ +
+      '/mytowerproto.MyTowerService/StreamPoints',
+      request,
+      metadata || {},
+      methodDescriptor_MyTowerService_StreamPoints);
+};
+
+
 module.exports = proto.mytowerproto;
 
