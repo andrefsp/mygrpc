@@ -112,6 +112,22 @@ impl MyTowerService for Service {
         &self,
         _request: Request<StreamPointsRequest>,
     ) -> Result<Response<Self::StreamPointsStream>, Status> {
-        Err(Status::unimplemented(""))
+        let (tx, rx) = tokio::sync::mpsc::channel(10);
+        let rx = tokio_stream::wrappers::ReceiverStream::new(rx);
+
+        tokio::spawn(async move {
+            loop {
+                tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
+                match tx.send(Ok(Point { x: 1.0, y: 2.0 })).await {
+                    Err(err) => {
+                        println!("{:?}", err);
+                        return;
+                    }
+                    _ => {}
+                };
+            }
+        });
+
+        Ok(Response::new(rx))
     }
 }
